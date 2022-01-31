@@ -1,20 +1,9 @@
-//package main
-//
-//import (
-//	"gitlab-reporter/parseArgs"
-//)
-
-
 package main
 
-import "fmt"
+import (
+	"gitlab-reporter/parseArgs"
+)
 
 func main() {
-    fmt.Println("Hello World!")
-    i := 101
-    fmt.Println(i)
+	parseArgs.ParseArgs()
 }
-
-//func main() {
-//	parseArgs.ParseArgs()
-//}
