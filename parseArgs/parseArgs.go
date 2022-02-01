@@ -49,14 +49,14 @@ func validReportCheck(s string) (string, error) {
 }
 
 // TODO add a function that will allow the user to change the directory where the report gets saved.
-//func setExportDirectory(s string) (string, error) {
-//	return s, nil
-//}
+func setExportDirectory(s string) (string, error) {
+	return s, nil
+}
 
 // TODO add a function that will allow the user to change the output of the report.
-//func setOutputFormat(s string) (string, error) {
-//	return s, nil
-//}
+func setOutputFormat(s string) (string, error) {
+	return s, nil
+}
 
 func parseToken(m map[string]string) {
 	if v, found := m["Address"]; found {
@@ -200,30 +200,6 @@ func outputFormatHelp() {
 	`
 	fmt.Printf("%s\n", outputFormatHelp)
 }
-func displayHelp() {
-	args, err := getArgs(os.Args)
-	if err != nil {
-		log.Fatalf("%s\n", err)
-	}
-	for _, v := range args {
-		switch v {
-		case "gitlab_url --help", "gitlab_url -help", "gitlab_url help", "gitlab_url -h":
-			gitlabUrlHelp()
-		case "vault_address --help", "vault_address -help", "vault_address help", "vault_address -h":
-			vaultAddressHelp()
-		case "api_token --help", "api_token -help", "api_token help", "api_token -h":
-			apiTokenHelp()
-		case "report --help", "report -help", "report help", "report -h":
-			reportHelp()
-		case "export_dir --help", "export_dir -help", "export_dir help", "export_dir -h":
-			exportDirectoryHelp()
-		case "--ouput_format", "-output_format", "output_format", "-of":
-			outputFormatHelp()
-		default:
-			defaultHelp()
-		}
-	}
-}
 
 func displayVersion() {
 	var versionNumber string = `
@@ -243,27 +219,63 @@ func ParseArgs() {
 	for i, v := range args {
 		switch v {
 		case "--gitlab_url", "-gitlab_url", "gitlab_url", "-gu":
-			data["Url"] = args[i+1]
+			fmt.Println(args[i])
+			fmt.Println(args[i+1])
+			if strings.Contains(args[i+1], "help") {
+				gitlabUrlHelp()
+			} else {
+				data["Url"] = args[i]
+			}
 		case "--vault_address", "-vault_address", "vault_address", "-va":
-			data["Address"] = args[i+1]
+			fmt.Println(args[i])
+			fmt.Println(args[i+1])
+			if strings.Contains(args[i+2], "help") {
+				vaultAddressHelp()
+			} else {
+				data["Address"] = args[i]
+			}
 		case "--api_token", "-api_token", "api_token", "-at":
-			data["Token"] = args[i+1]
+			fmt.Println(args[i])
+			fmt.Println(args[i+1])
+			if strings.Contains(args[i+1], "help") {
+				apiTokenHelp()
+			} else {
+				data["Token"] = args[i]
+			}
 		case "--report", "-report", "report", "-r":
-			response, err := validReportCheck(args[i+1])
+			fmt.Println(args[i])
+			fmt.Println(args[i+1])
+			response, err := validReportCheck(args[i])
 			if err != nil {
 				log.Fatalf("%s\n", err)
 			}
-			data["Report"] = response
+			if strings.Contains(args[i+1], "help") {
+				reportHelp()
+			} else {
+				data["Report"] = response
+			}
 		//TODO add a function that will allow the user to change the directory where the report gets saved.
 		case "--export_dir", "-export_dir", "export_dir", "-ed":
-			data["Directory"] = args[i+1]
+			fmt.Println(args[i])
+			fmt.Println(args[i+1])
+			if strings.Contains(args[i+1], "help") {
+				exportDirectoryHelp()
+			} else {
+				data["Directory"] = args[i]
+			}
 		//TODO add a function that will allow the user to change the output of the report.
 		case "--ouput_format", "-output_format", "output_format", "-of":
-			data["Format"] = args[i+1]
-		case "--help", "-help", "help", "-h":
-			displayHelp()
+			fmt.Println(args[i])
+			fmt.Println(args[i+1])
+			if strings.Contains(args[i+1], "help") {
+				reportHelp()
+			} else {
+				data["Format"] = args[i+1]
+			}
 		case "--version", "-version", "version", "-v":
 			displayVersion()
+		default:
+			defaultHelp()
 		}
 	}
 	parseToken(data)
