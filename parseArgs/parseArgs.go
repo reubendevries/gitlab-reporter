@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"github.com/hashicorp/vault/api"
 )
 
 func getArgs(s []string) ([]string, error) {
@@ -19,10 +21,24 @@ func getArgs(s []string) ([]string, error) {
 	return args, nil
 }
 
-// TODO add a funtion that will allow us to process an API token from some sort of Vault.
-func getVaultToken(s, t string) (string, error) {
-	var vaultToken string
-	return vaultToken, nil
+func getVaultSecret(a, t, p string) (string, error) {
+	config := &api.Config{
+		Address: a,
+	}
+	client, err := api.NewClient(config)
+	if err != nil {
+		log.Fatalf("%s\n", err)
+	}
+	client.SetToken(t)
+	secret, err := client.Logical().Read(p)
+	if err != nil {
+		log.Fatalf("%s\n", err)
+	}
+	m, ok := secret.Data["data"].(map[string]string)
+	if !ok {
+		fmt.Printf("%T %#v\n", secret.Data["data"], secret.Data["data"])
+	}
+	return m["gitlabToken"], nil
 }
 
 func apiToken(s string) (string, error) {
@@ -52,7 +68,7 @@ func setOutputFormat(s string) (string, error) {
 
 func parseToken(m map[string]string) {
 	if v, found := m["Address"]; found {
-		token, err := getVaultToken(v, m["Token"])
+		token, err := getVaultSecret(v, m["Token"], m["Path"])
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
@@ -124,6 +140,7 @@ func defaultHelp() {
 	Commands:
 	--gitlab_url, -gitlab_url, gitlab_url, -gu			Passthrough your GitLab Url
 	--vault_address, -vault_address, vault_address -va		Passthrough your Hashicorp Vault Address
+	--path, -path, path, -p						Passthrough your HashiCorp Secret Path
 	--api_token, -api_token, api_token, -at				Passthrough your API Token (Either GitLab API Token or Hashicorp Vault Token)
 	--report, -report, report, -r					Passthrough the Report you wish to call
 	--export_dir, -export_dir, export_dir, -ed			Allows you to select the export folder.
@@ -136,10 +153,15 @@ func defaultHelp() {
 }
 func gitlabUrlHelp() {
 	var gitlabUrlHelp string = `
-	Usage: 	gitlab-reporter --gitlab_url https://gitlab.example.com
-			gitlab-reporter -gitlab_url https://gitlab.examplecom
-			gitlab-reporter gitlab_url https://gitlab.examplecom
+	Usage: 		gitlab-reporter --gitlab_url https://gitlab.example.com
+			gitlab-reporter -gitlab_url https://gitlab.example.com
+			gitlab-reporter gitlab_url https://gitlab.example.com
 			gitlab-reporter -gu https://gitlab.example.com
+
+			One of the required flags. This is so the applications understands
+			which gitlab url you will be calling, this allows functionality for
+			self-hosted gitlab clusters as well as the cloud-hosted cluster by
+			gitlab. 
 	`
 	fmt.Printf("%s\n", gitlabUrlHelp)
 	os.Exit(0)
@@ -147,10 +169,25 @@ func gitlabUrlHelp() {
 
 func vaultAddressHelp() {
 	var vaultAddressHelp string = `
-	Usage: 	gitlab-reporter --vault_address https://vault.example.com
+	Usage: 		gitlab-reporter --vault_address https://vault.example.com
 			gitlab-reporter -vault_address https://vault.example.com
 			gitlab-reporter vault_address https://vault.example.com
 			gitlab-reporter -va https://vault.example.com
+
+			Must be used in conjunction with the --path flag.
+	`
+	fmt.Printf("%s\n", vaultAddressHelp)
+	os.Exit(0)
+}
+
+func pathHelp() {
+	var vaultAddressHelp string = `
+	Usage: 		gitlab-reporter --path secret/data/foo
+			gitlab-reporter -path secret/data/foo
+			gitlab-reporter path secret/data/foo
+			gitlab-reporter -p secret/data/foo
+			
+			Must be used in conjunction with the --vault_address flag.
 	`
 	fmt.Printf("%s\n", vaultAddressHelp)
 	os.Exit(0)
@@ -158,7 +195,7 @@ func vaultAddressHelp() {
 
 func apiTokenHelp() {
 	var apiTokenHelp string = `
-	Usage: 	gitlab-reporter --api_token <put your secret token here>
+	Usage: 		gitlab-reporter --api_token <put your secret token here>
 			gitlab-reporter -api_token <put your secret token here>
 			gitlab-reporter api_token <put your secret token here>
 			gitlab-reporter -at <put your secret token here>
@@ -169,7 +206,7 @@ func apiTokenHelp() {
 
 func reportHelp() {
 	var reportHelp string = `
-	Usage: 	gitlab-reporter --report <put your report name here>
+	Usage: 		gitlab-reporter --report <put your report name here>
 			gitlab-reporter -report <put your report name here>
 			gitlab-reporter report <put your report name here>
 			gitlab-reporter -r <put your report name here>
@@ -179,7 +216,7 @@ func reportHelp() {
 
 func exportDirectoryHelp() {
 	var exportDirectoryHelp string = `
-	Usage: 	gitlab-reporter --export_dir <put path you want your report saved>
+	Usage: 		gitlab-reporter --export_dir <put path you want your report saved>
 			gitlab-reporter -export_dir <put path you want your report saved>
 			gitlab-reporter export_dir <put path you want your report saved>
 			gitlab-reporter -ed <put path you want your report saved>
@@ -190,7 +227,7 @@ func exportDirectoryHelp() {
 
 func outputFormatHelp() {
 	var outputFormatHelp string = `
-	Usage: 	gitlab-reporter --output_format <put the format you want your report saved as)
+	Usage: 		gitlab-reporter --output_format <put the format you want your report saved as)
 			gitlab-reporter -output_format <put the format you want your report saved as)
 			gitlab-reporter output_format <put the format you want your report saved as)
 			gitlab-reporter -of <put the format you want your report saved as)
@@ -224,16 +261,18 @@ func ParseArgs() {
 				data["Url"] = args[i]
 			}
 		case "--vault_address", "-vault_address", "vault_address", "-va":
-			fmt.Println(args[i])
-			fmt.Println(args[i+1])
 			if strings.Contains(args[i+2], "help") {
 				vaultAddressHelp()
 			} else {
 				data["Address"] = args[i]
 			}
+		case "--path", "-path", "path", "-p":
+			if strings.Contains(args[i+1], "help") {
+				pathHelp()
+			} else {
+				data["Path"] = args[i]
+			}
 		case "--api_token", "-api_token", "api_token", "-at":
-			fmt.Println(args[i])
-			fmt.Println(args[i+1])
 			if strings.Contains(args[i+1], "help") {
 				apiTokenHelp()
 			} else {
@@ -251,7 +290,6 @@ func ParseArgs() {
 			} else {
 				data["Report"] = response
 			}
-		//TODO add a function that will allow the user to change the directory where the report gets saved.
 		case "--export_dir", "-export_dir", "export_dir", "-ed":
 			fmt.Println(args[i])
 			fmt.Println(args[i+1])
@@ -260,7 +298,6 @@ func ParseArgs() {
 			} else {
 				data["Directory"] = args[i]
 			}
-		//TODO add a function that will allow the user to change the output of the report.
 		case "--ouput_format", "-output_format", "output_format", "-of":
 			fmt.Println(args[i])
 			fmt.Println(args[i+1])
