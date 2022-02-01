@@ -1,7 +1,6 @@
 package reports
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,25 +12,23 @@ import (
 //	p := r.Header.Get(s)
 //}
 
-func ListUsers(u string, t string) {
+func ListUsers(m map[string]string) (string, error) {
 	var result string
-	var bearer = "Bearer " + t
+	var bearer = "Bearer " + m["Token"]
 	lu := "/api/v4/users"
-	req, err := http.NewRequest("GET", u+lu, nil)
+	req, err := http.NewRequest("GET", m["Url"]+lu, nil)
 	if err != nil {
 		log.Fatalf("%s\n", err)
 	}
 	h := req.Header
-
 	h.Add("Authorization", bearer)
-
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	response, err := client.Do(req)
 	if err != nil {
 		log.Fatalf("%s\n", err)
 	}
-	defer resp.Body.Close()
-	totalPages := (resp.Header.Get("x-total-pages"))
+	defer response.Body.Close()
+	totalPages := (response.Header.Get("x-total-pages"))
 	pages, err := strconv.Atoi(totalPages)
 	if err != nil {
 		log.Fatalf("%s\n", err)
@@ -39,36 +36,41 @@ func ListUsers(u string, t string) {
 	for i := 1; i >= pages; i++ {
 		q := url.Values{}
 		q.Add("pages=", strconv.Itoa(i))
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			log.Fatalf("%s\n", err)
 		}
 		result = string(body)
-		fmt.Println(result)
 	}
-	//return result, nil
+	return result, nil
 }
 
-func ListActiveUsers() {
-
+func ListActiveUsers(m map[string]string) (string, error) {
+	var result string
+	return result, nil
 }
 
-func ListBlockedUsers() {
-
+func ListBlockedUsers(m map[string]string) (string, error) {
+	var result string
+	return result, nil
 }
 
-func ListExternalUsers() {
-
+func ListExternalUsers(m map[string]string) (string, error) {
+	var result string
+	return result, nil
 }
 
-func ListUsersUsing2FA() {
-
+func ListUsersUsing2FA(m map[string]string) (string, error) {
+	var result string
+	return result, nil
 }
 
-func ListGroups() {
-
+func ListGroups(m map[string]string) (string, error) {
+	var result string
+	return result, nil
 }
 
-func ListGroupProjects() {
-
+func ListGroupProjects(m map[string]string) (string, error) {
+	var result string
+	return result, nil
 }
