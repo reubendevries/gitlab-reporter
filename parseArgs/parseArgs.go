@@ -19,14 +19,6 @@ func getArgs(s []string) ([]string, error) {
 	return args, nil
 }
 
-func getGitLabUrl(s string) (string, error) {
-	switch strings.HasPrefix(s, "https") {
-	case false:
-		return s, errors.New("please use in a secure gitlab url")
-	}
-	return s, nil
-}
-
 // TODO add a funtion that will allow us to process an API token from some sort of Vault.
 func getVaultToken(s, t string) (string, error) {
 	var vaultToken string
@@ -140,6 +132,7 @@ func defaultHelp() {
 	--version, -version, version, -v				Shows the Version output
 	`
 	fmt.Printf("%s\n", defaultHelp)
+	os.Exit(0)
 }
 func gitlabUrlHelp() {
 	var gitlabUrlHelp string = `
@@ -149,6 +142,7 @@ func gitlabUrlHelp() {
 			gitlab-reporter -gu https://gitlab.example.com
 	`
 	fmt.Printf("%s\n", gitlabUrlHelp)
+	os.Exit(0)
 }
 
 func vaultAddressHelp() {
@@ -159,6 +153,7 @@ func vaultAddressHelp() {
 			gitlab-reporter -va https://vault.example.com
 	`
 	fmt.Printf("%s\n", vaultAddressHelp)
+	os.Exit(0)
 }
 
 func apiTokenHelp() {
@@ -169,6 +164,7 @@ func apiTokenHelp() {
 			gitlab-reporter -at <put your secret token here>
 	`
 	fmt.Printf("%s\n", apiTokenHelp)
+	os.Exit(0)
 }
 
 func reportHelp() {
@@ -189,6 +185,7 @@ func exportDirectoryHelp() {
 			gitlab-reporter -ed <put path you want your report saved>
 	`
 	fmt.Printf("%s\n", exportDirectoryHelp)
+	os.Exit(0)
 }
 
 func outputFormatHelp() {
@@ -199,6 +196,7 @@ func outputFormatHelp() {
 			gitlab-reporter -of <put the format you want your report saved as)
 	`
 	fmt.Printf("%s\n", outputFormatHelp)
+	os.Exit(0)
 }
 
 func displayVersion() {
@@ -208,6 +206,7 @@ Version: 0.01
 Build: alpha_build
 `
 	fmt.Printf("%s\n", versionNumber)
+	os.Exit(0)
 }
 
 func ParseArgs() {
@@ -216,11 +215,9 @@ func ParseArgs() {
 	if err != nil {
 		log.Fatalf("%s\n", err)
 	}
-	for i, v := range args {
-		switch v {
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
 		case "--gitlab_url", "-gitlab_url", "gitlab_url", "-gu":
-			fmt.Println(args[i])
-			fmt.Println(args[i+1])
 			if strings.Contains(args[i+1], "help") {
 				gitlabUrlHelp()
 			} else {
@@ -268,13 +265,13 @@ func ParseArgs() {
 			fmt.Println(args[i])
 			fmt.Println(args[i+1])
 			if strings.Contains(args[i+1], "help") {
-				reportHelp()
+				outputFormatHelp()
 			} else {
 				data["Format"] = args[i+1]
 			}
 		case "--version", "-version", "version", "-v":
 			displayVersion()
-		default:
+		case "--help", "-help", "help", "-h":
 			defaultHelp()
 		}
 	}
