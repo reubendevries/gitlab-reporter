@@ -21,7 +21,7 @@ func getArgs(s []string) ([]string, error) {
 	return args, nil
 }
 
-func getVaultSecret(a, t, p string) (string, error) {
+func getVaultSecret(a, t, p, k string) (string, error) {
 	config := &api.Config{
 		Address: a,
 	}
@@ -38,7 +38,7 @@ func getVaultSecret(a, t, p string) (string, error) {
 	if !ok {
 		fmt.Printf("%T %#v\n", secret.Data["data"], secret.Data["data"])
 	}
-	return m["gitlabToken"], nil
+	return m[k], nil
 }
 
 func apiToken(s string) (string, error) {
@@ -68,7 +68,7 @@ func setOutputFormat(s string) (string, error) {
 
 func parseToken(m map[string]string) {
 	if v, found := m["Address"]; found {
-		token, err := getVaultSecret(v, m["Token"], m["Path"])
+		token, err := getVaultSecret(v, m["Token"], m["Path"], m["Key"])
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
@@ -141,6 +141,7 @@ func defaultHelp() {
 	--gitlab_url, -gitlab_url, gitlab_url, -gu			Passthrough your GitLab Url
 	--vault_address, -vault_address, vault_address -va		Passthrough your Hashicorp Vault Address
 	--path, -path, path, -p						Passthrough your HashiCorp Secret Path
+	--secret_key, -secret_key, secret_key, -sk			Passthrough your HashiCorp Secret Key
 	--api_token, -api_token, api_token, -at				Passthrough your API Token (Either GitLab API Token or Hashicorp Vault Token)
 	--report, -report, report, -r					Passthrough the Report you wish to call
 	--export_dir, -export_dir, export_dir, -ed			Allows you to select the export folder.
@@ -182,10 +183,10 @@ func vaultAddressHelp() {
 
 func pathHelp() {
 	var vaultAddressHelp string = `
-	Usage: 		gitlab-reporter --path secret/data/foo
-			gitlab-reporter -path secret/data/foo
-			gitlab-reporter path secret/data/foo
-			gitlab-reporter -p secret/data/foo
+	Usage: 		gitlab-reporter --path pass the path where the secret is contained in HashiCorp Vault
+			gitlab-reporter -path pass the path where the secret is contained in HashiCorp Vault
+			gitlab-reporter path pass the path where the secret is contained in HashiCorp Vault
+			gitlab-reporter -p pass the path where the secret is contained in HashiCorp Vault
 			
 			Must be used in conjunction with the --vault_address flag.
 	`
@@ -193,12 +194,25 @@ func pathHelp() {
 	os.Exit(0)
 }
 
+func secretKeyHelp() {
+	var secretKeyHelp string = `
+	Usage:		gitlab-reporter --secret_key pass the Key from HashiCorp Vault Secret
+			gitlab-reporter -secret_key pass the Key from HashiCorp Vault Secret
+			gitlab-reporter secret_key pass the key from the HashiCorp Vault Secret
+			gitlab-reporter -sk pass the key from the HashiCorp Vault Secret
+
+			Must be used in conjunction with teh --vault_address flag.
+	`
+	fmt.Printf("%s\n", secretKeyHelp)
+	os.Exit(0)
+}
+
 func apiTokenHelp() {
 	var apiTokenHelp string = `
-	Usage: 		gitlab-reporter --api_token <put your secret token here>
-			gitlab-reporter -api_token <put your secret token here>
-			gitlab-reporter api_token <put your secret token here>
-			gitlab-reporter -at <put your secret token here>
+	Usage: 		gitlab-reporter --api_token pass the secret token from either GitLab or Hashicorp Vault
+			gitlab-reporter -api_token pass the secret token from either GitLab or HashiCorp Vault
+			gitlab-reporter api_token pass the secret token from either GitLab or HashiCorp Vault
+			gitlab-reporter -at pass the secret token from either GitLab or HashiCorp Vault
 	`
 	fmt.Printf("%s\n", apiTokenHelp)
 	os.Exit(0)
@@ -271,6 +285,12 @@ func ParseArgs() {
 				pathHelp()
 			} else {
 				data["Path"] = args[i]
+			}
+		case "--secret_key", "-secret_key", "secret_key", "-sk":
+			if strings.Contains(args[i+1], "help") {
+				secretKeyHelp()
+			} else {
+				data["Key"] = args[i]
 			}
 		case "--api_token", "-api_token", "api_token", "-at":
 			if strings.Contains(args[i+1], "help") {
