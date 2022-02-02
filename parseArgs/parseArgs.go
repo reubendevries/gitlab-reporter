@@ -78,6 +78,7 @@ func parseToken(m map[string]string) {
 		executeReport(m)
 	}
 }
+
 func executeReport(m map[string]string) (string, error) {
 	var result string
 	switch m["Report"] {
@@ -152,6 +153,7 @@ func defaultHelp() {
 	fmt.Printf("%s\n", defaultHelp)
 	os.Exit(0)
 }
+
 func gitlabUrlHelp() {
 	var gitlabUrlHelp string = `
 	Usage: 		gitlab-reporter --gitlab_url https://gitlab.example.com
