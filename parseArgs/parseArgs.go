@@ -21,7 +21,7 @@ func getArgs(s []string) ([]string, error) {
 	return args, nil
 }
 
-func getVaultSecret(a, t, p string) (string, error) {
+func getVaultSecret(a, t, p, k string) (string, error) {
 	config := &api.Config{
 		Address: a,
 	}
@@ -38,7 +38,7 @@ func getVaultSecret(a, t, p string) (string, error) {
 	if !ok {
 		fmt.Printf("%T %#v\n", secret.Data["data"], secret.Data["data"])
 	}
-	return m["gitlabToken"], nil
+	return m[k], nil
 }
 
 func apiToken(s string) (string, error) {
@@ -68,7 +68,7 @@ func setOutputFormat(s string) (string, error) {
 
 func parseToken(m map[string]string) {
 	if v, found := m["Address"]; found {
-		token, err := getVaultSecret(v, m["Token"], m["Path"])
+		token, err := getVaultSecret(v, m["Token"], m["Path"], m["Key"])
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
@@ -141,6 +141,7 @@ func defaultHelp() {
 	--gitlab_url, -gitlab_url, gitlab_url, -gu			Passthrough your GitLab Url
 	--vault_address, -vault_address, vault_address -va		Passthrough your Hashicorp Vault Address
 	--path, -path, path, -p						Passthrough your HashiCorp Secret Path
+	--secret_key, -secret_key, secret_key, -sk			Passthrough your HashiCorp Secret Key
 	--api_token, -api_token, api_token, -at				Passthrough your API Token (Either GitLab API Token or Hashicorp Vault Token)
 	--report, -report, report, -r					Passthrough the Report you wish to call
 	--export_dir, -export_dir, export_dir, -ed			Allows you to select the export folder.
