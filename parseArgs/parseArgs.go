@@ -3,6 +3,7 @@ package parseArgs
 import (
 	"errors"
 	"fmt"
+	"gitlab-reporter/helpMenu"
 	"gitlab-reporter/reports"
 	"log"
 	"net/http"
@@ -224,156 +225,6 @@ func executeReport(m map[string]string) (string, error) {
 	}
 }
 
-func defaultHelp() {
-	var defaultHelp string = `
-	Usage: gitlab-reporter [command]
-
-	An application that helps call the GitLab API and then
-	exports a report of the results into various formats.
-
-	The available commands for execution are listed below:
-
-	Commands:
-	--gitlab_url, -gitlab_url, gitlab_url, -gu			Passthrough your GitLab Url
-	--vault_address, -vault_address, vault_address -va		Passthrough your HashiCorp Vault Address
-	--namespace, -namespace, namespace -n 				Passthrough your HashiCorp Vault Namespace
-	--path, -path, path, -p						Passthrough your HashiCorp Secret Path
-	--secret_key, -secret_key, secret_key, -sk			Passthrough your HashiCorp Secret Key
-	--api_token, -api_token, api_token, -at				Passthrough your API Token (Either GitLab API Token or Hashicorp Vault Token)
-	--report, -report, report, -r					Passthrough the Report you wish to call
-	--export_dir, -export_dir, export_dir, -ed			Allows you to select the export folder.
-	--ouput_format, -output_format, output_format, -of 		Allows you to choose the output format of the report
-	--help, -help, help, -h 					Shows the Help output
-	--version, -version, version, -v				Shows the Version output
-	`
-	fmt.Printf("%s\n", defaultHelp)
-	os.Exit(0)
-}
-
-func gitlabUrlHelp() {
-	var gitlabUrlHelp string = `
-	Usage: 		gitlab-reporter --gitlab_url https://gitlab.example.com
-			gitlab-reporter -gitlab_url https://gitlab.example.com
-			gitlab-reporter gitlab_url https://gitlab.example.com
-			gitlab-reporter -gu https://gitlab.example.com
-
-			One of the required flags. This is so the applications understands
-			which gitlab url you will be calling, this allows functionality for
-			self-hosted gitlab clusters as well as the cloud-hosted cluster by
-			gitlab. 
-	`
-	fmt.Printf("%s\n", gitlabUrlHelp)
-	os.Exit(0)
-}
-
-func vaultAddressHelp() {
-	var vaultAddressHelp string = `
-	Usage: 		gitlab-reporter --vault_address https://vault.example.com
-			gitlab-reporter -vault_address https://vault.example.com
-			gitlab-reporter vault_address https://vault.example.com
-			gitlab-reporter -va https://vault.example.com
-
-			Must be used in conjunction with the --namespace, --path, and --secret_key flags.
-	`
-	fmt.Printf("%s\n", vaultAddressHelp)
-	os.Exit(0)
-}
-
-func namespaceHelp() {
-	var namespaceHelp string = `
-	Usage: 		gitlab-reporter --namepsace namespace
-			gitlab-reporter -namespace namespace
-			gitlab-reporter namespace namespace
-			gitlab-reporter -n namespace
-
-			Must be used in conjunction with the --vault_address, --path, and --secret_key flags.
-	`
-	fmt.Printf("%s\n", namespaceHelp)
-	os.Exit(0)
-}
-
-func pathHelp() {
-	var vaultAddressHelp string = `
-	Usage: 		gitlab-reporter --path pass the path where the secret is contained in HashiCorp Vault
-			gitlab-reporter -path pass the path where the secret is contained in HashiCorp Vault
-			gitlab-reporter path pass the path where the secret is contained in HashiCorp Vault
-			gitlab-reporter -p pass the path where the secret is contained in HashiCorp Vault
-			
-			Must be used in conjunction with the --vault_address, --namespace, and --secret_key flags.
-	`
-	fmt.Printf("%s\n", vaultAddressHelp)
-	os.Exit(0)
-}
-
-func secretKeyHelp() {
-	var secretKeyHelp string = `
-	Usage:		gitlab-reporter --secret_key pass the Key from HashiCorp Vault Secret
-			gitlab-reporter -secret_key pass the Key from HashiCorp Vault Secret
-			gitlab-reporter secret_key pass the key from the HashiCorp Vault Secret
-			gitlab-reporter -sk pass the key from the HashiCorp Vault Secret
-
-			Must be used in conjunction with the --vault_address, --namespace, and --path.
-	`
-	fmt.Printf("%s\n", secretKeyHelp)
-	os.Exit(0)
-}
-
-func apiTokenHelp() {
-	var apiTokenHelp string = `
-	Usage: 		gitlab-reporter --api_token pass the secret token from either GitLab or Hashicorp Vault
-			gitlab-reporter -api_token pass the secret token from either GitLab or HashiCorp Vault
-			gitlab-reporter api_token pass the secret token from either GitLab or HashiCorp Vault
-			gitlab-reporter -at pass the secret token from either GitLab or HashiCorp Vault
-
-			Required Field that must be passed through either to use API token to decrypt Hashicorp Vault 
-			or to directly read the GitLab API directly.
-	`
-	fmt.Printf("%s\n", apiTokenHelp)
-	os.Exit(0)
-}
-
-func reportHelp() {
-	var reportHelp string = `
-	Usage: 		gitlab-reporter --report <put your report name here>
-			gitlab-reporter -report <put your report name here>
-			gitlab-reporter report <put your report name here>
-			gitlab-reporter -r <put your report name here>
-	`
-	fmt.Printf("%s\n", reportHelp)
-}
-
-func exportDirectoryHelp() {
-	var exportDirectoryHelp string = `
-	Usage: 		gitlab-reporter --export_dir <put path you want your report saved>
-			gitlab-reporter -export_dir <put path you want your report saved>
-			gitlab-reporter export_dir <put path you want your report saved>
-			gitlab-reporter -ed <put path you want your report saved>
-	`
-	fmt.Printf("%s\n", exportDirectoryHelp)
-	os.Exit(0)
-}
-
-func outputFormatHelp() {
-	var outputFormatHelp string = `
-	Usage: 		gitlab-reporter --output_format <put the format you want your report saved as)
-			gitlab-reporter -output_format <put the format you want your report saved as)
-			gitlab-reporter output_format <put the format you want your report saved as)
-			gitlab-reporter -of <put the format you want your report saved as)
-	`
-	fmt.Printf("%s\n", outputFormatHelp)
-	os.Exit(0)
-}
-
-func displayVersion() {
-	var versionNumber string = `
-GitLab Reporter
-Version: 0.01
-Build: alpha_build
-`
-	fmt.Printf("%s\n", versionNumber)
-	os.Exit(0)
-}
-
 func ParseArgs() {
 	data := make(map[string]string)
 	args, err := getArgs(os.Args)
@@ -384,37 +235,37 @@ func ParseArgs() {
 		switch args[i] {
 		case "--gitlab_url", "-gitlab_url", "gitlab_url", "-gu":
 			if strings.Contains(args[i+1], "help") {
-				gitlabUrlHelp()
+				helpMenu.GitlabUrlHelp()
 			} else {
 				data["Url"] = args[i+1]
 			}
 		case "--vault_address", "-vault_address", "vault_address", "-va":
 			if strings.Contains(args[i+1], "help") {
-				vaultAddressHelp()
+				helpMenu.VaultAddressHelp()
 			} else {
 				data["Address"] = args[i+1]
 			}
 		case "--namespace", "-namespace", "namespace", "-n":
 			if strings.Contains(args[i+1], "help") {
-				namespaceHelp()
+				helpMenu.NamespaceHelp()
 			} else {
 				data["Namespace"] = args[i+1]
 			}
 		case "--path", "-path", "path", "-p":
 			if strings.Contains(args[i+1], "help") {
-				pathHelp()
+				helpMenu.PathHelp()
 			} else {
 				data["Path"] = args[i+1]
 			}
 		case "--secret_key", "-secret_key", "secret_key", "-sk":
 			if strings.Contains(args[i+1], "help") {
-				secretKeyHelp()
+				helpMenu.SecretKeyHelp()
 			} else {
 				data["Key"] = args[i+1]
 			}
 		case "--api_token", "-api_token", "api_token", "-at":
 			if strings.Contains(args[i+1], "help") {
-				apiTokenHelp()
+				helpMenu.ApiTokenHelp()
 			} else {
 				data["Token"] = args[i+1]
 			}
@@ -424,28 +275,26 @@ func ParseArgs() {
 				log.Fatalf("%s\n", err)
 			}
 			if strings.Contains(args[i+1], "help") {
-				reportHelp()
+				helpMenu.ReportHelp()
 			} else {
 				data["Report"] = response
 			}
 		case "--export_dir", "-export_dir", "export_dir", "-ed":
-			fmt.Println(args[i])
-			fmt.Println(args[i+1])
 			if strings.Contains(args[i+1], "help") {
-				exportDirectoryHelp()
+				helpMenu.ExportDirectoryHelp()
 			} else {
 				data["Directory"] = args[i+1]
 			}
 		case "--ouput_format", "-output_format", "output_format", "-of":
 			if strings.Contains(args[i+1], "help") {
-				outputFormatHelp()
+				helpMenu.OutputFormatHelp()
 			} else {
 				data["Format"] = args[i+1]
 			}
 		case "--version", "-version", "version", "-v":
-			displayVersion()
+			helpMenu.DisplayVersion()
 		case "--help", "-help", "help", "-h":
-			defaultHelp()
+			helpMenu.DefaultHelp()
 		}
 	}
 	parseToken(data)
