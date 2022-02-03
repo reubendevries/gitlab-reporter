@@ -1,7 +1,6 @@
 package reports
 
 import (
-	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,17 +9,6 @@ import (
 	"strconv"
 )
 
-func ValidReportCheck(s string) (string, error) {
-	reports := []string{"list_users", "list_active_users", "list_blocked_users", "list_external_users", "list_users_using_2FA", "list_groups", "list_group_projects"}
-	for _, v := range reports {
-		if v == s {
-			return s, nil
-		}
-		continue
-	}
-	return s, errors.New("report name passed is not on list of valid reports")
-}
-
 func ExecuteReport(m map[string]string) (string, error) {
 	var result string
 	switch m["Report"] {
@@ -28,36 +16,42 @@ func ExecuteReport(m map[string]string) (string, error) {
 		result, err := listUsers(m)
 		if err != nil {
 			log.Fatalf("%s\n", err)
+			os.Exit(1)
 		}
 		return result, nil
 	case "list_active_users":
 		result, err := listActiveUsers(m)
 		if err != nil {
 			log.Fatalf("%s\n", err)
+			os.Exit(1)
 		}
 		return result, nil
 	case "list_blocked_users":
 		result, err := listBlockedUsers(m)
 		if err != nil {
 			log.Fatalf("%s\n", err)
+			os.Exit(1)
 		}
 		return result, nil
 	case "list_external_users":
 		result, err := listExternalUsers(m)
 		if err != nil {
 			log.Fatalf("%s\n", err)
+			os.Exit(1)
 		}
 		return result, nil
 	case "list_users_using_2FA":
 		result, err := listUsersUsing2FA(m)
 		if err != nil {
 			log.Fatalf("%s\n", err)
+			os.Exit(1)
 		}
 		return result, nil
 	case "list_groups":
 		result, err := listGroups(m)
 		if err != nil {
 			log.Fatalf("%s\n", err)
+			os.Exit(1)
 		}
 		return result, nil
 	case "list_group_projects":
@@ -67,9 +61,8 @@ func ExecuteReport(m map[string]string) (string, error) {
 			os.Exit(1)
 		}
 		return result, nil
-	default:
-		return result, errors.New("report not found, exiting application")
 	}
+	return result, nil
 }
 
 func listUsers(m map[string]string) (string, error) {

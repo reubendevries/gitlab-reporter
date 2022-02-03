@@ -12,7 +12,7 @@ import (
 
 func ParseToken(m map[string]string) {
 	if v, found := m["Address"]; found {
-		err := checkStatus.CheckVaultStatus(v, m["Token"])
+		err := checkStatus.CheckVaultStatus(v)
 		if err != nil {
 			log.Fatalf("%s\n", err)
 			os.Exit(1)
@@ -23,19 +23,29 @@ func ParseToken(m map[string]string) {
 			os.Exit(1)
 		}
 		m["Token"] = token
-		err = checkStatus.CheckGitlabStatus(m["Url"], m["Token"])
+		err = checkStatus.CheckGitlabStatus(m["Url"])
 		if err != nil {
 			log.Fatalf("%s\n", err)
 			os.Exit(1)
 		}
-		reports.ExecuteReport(m)
+		results, err := reports.ExecuteReport(m)
+		if err != nil {
+			log.Fatalf("%s\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(results)
 	} else {
-		err := checkStatus.CheckGitlabStatus(m["Url"], m["Token"])
+		err := checkStatus.CheckGitlabStatus(m["Url"])
 		if err != nil {
 			log.Fatalf("%s\n", err)
 			os.Exit(1)
 		}
-		reports.ExecuteReport(m)
+		result, err := reports.ExecuteReport(m)
+		if err != nil {
+			log.Fatalf("%s\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(result)
 	}
 }
 

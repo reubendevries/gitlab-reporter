@@ -2,29 +2,16 @@ package checkStatus
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 )
 
-func CheckGitlabStatus(u, t string) error {
-	apiEndpoint := u + "/api/v4/version"
-	var bearer = "Bearer " + t
-	req, err := http.NewRequest("GET", apiEndpoint, nil)
+func CheckGitlabStatus(u string) error {
+	url := u + "/users/sign_in"
+	response, err := http.Get(url)
 	if err != nil {
 		log.Fatalf("%s\n", err)
-		os.Exit(1)
 	}
-	h := req.Header
-	h.Add("Authorization", bearer)
-	client := &http.Client{}
-	response, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("%s\n", err)
-		os.Exit(1)
-	}
-	defer response.Body.Close()
 	switch response.StatusCode {
 	case 400:
 		return errors.New(response.Status)
@@ -50,22 +37,12 @@ func CheckGitlabStatus(u, t string) error {
 	return nil
 }
 
-func CheckVaultStatus(a, t string) error {
-	apiEndpoint := a + "/v1/secret?help=1"
-	fmt.Println(apiEndpoint)
-	var bearer = "Bearer " + t
-	req, err := http.NewRequest("GET", apiEndpoint, nil)
+func CheckVaultStatus(a string) error {
+	endpoint := a + "/ui/vault"
+	response, err := http.Get(endpoint)
 	if err != nil {
 		log.Fatalf("%s\n", err)
 	}
-	h := req.Header
-	h.Add("Authorization", bearer)
-	client := &http.Client{}
-	response, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("%s\n", err)
-	}
-	defer response.Body.Close()
 	switch response.StatusCode {
 	case 400:
 		return errors.New(response.Status)
@@ -89,4 +66,15 @@ func CheckVaultStatus(a, t string) error {
 		return errors.New(response.Status)
 	}
 	return nil
+}
+
+func ValidReportCheck(s string) error {
+	reports := []string{"list_users", "list_active_users", "list_blocked_users", "list_external_users", "list_users_using_2FA", "list_groups", "list_group_projects"}
+	for _, v := range reports {
+		if v == s {
+			return nil
+		}
+		continue
+	}
+	return errors.New("report name passed is not on list of valid reports")
 }

@@ -1,9 +1,9 @@
 package parseArgs
 
 import (
+	"gitlab-reporter/checkStatus"
 	"gitlab-reporter/getKey"
 	"gitlab-reporter/helpMenu"
-	"gitlab-reporter/reports"
 	"log"
 	"os"
 	"strings"
@@ -74,14 +74,15 @@ func ParseArgs() {
 				data["Token"] = args[i+1]
 			}
 		case "--report", "-report", "report", "-r":
-			response, err := reports.ValidReportCheck(args[i])
+			err := checkStatus.ValidReportCheck(args[i+1])
 			if err != nil {
 				log.Fatalf("%s\n", err)
+				os.Exit(1)
 			}
 			if strings.Contains(args[i+1], "help") {
 				helpMenu.ReportHelp()
 			} else {
-				data["Report"] = response
+				data["Report"] = args[i+1]
 			}
 		case "--export_dir", "-export_dir", "export_dir", "-ed":
 			if strings.Contains(args[i+1], "help") {
