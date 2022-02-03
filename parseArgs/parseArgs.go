@@ -396,7 +396,7 @@ func ParseArgs() {
 			}
 		case "--namespace", "-namespace", "namespace", "-n":
 			if strings.Contains(args[i+1], "help") {
-				vaultAddressHelp()
+				namespaceHelp()
 			} else {
 				data["Namespace"] = args[i+1]
 			}
