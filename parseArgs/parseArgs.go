@@ -236,7 +236,7 @@ func defaultHelp() {
 	Commands:
 	--gitlab_url, -gitlab_url, gitlab_url, -gu			Passthrough your GitLab Url
 	--vault_address, -vault_address, vault_address -va		Passthrough your HashiCorp Vault Address
-	--namespace, -namespace, namespace -n Passthrough your HashiCorp Vault Namespace
+	--namespace, -namespace, namespace -n 				Passthrough your HashiCorp Vault Namespace
 	--path, -path, path, -p						Passthrough your HashiCorp Secret Path
 	--secret_key, -secret_key, secret_key, -sk			Passthrough your HashiCorp Secret Key
 	--api_token, -api_token, api_token, -at				Passthrough your API Token (Either GitLab API Token or Hashicorp Vault Token)
