@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gitlab-reporter/reports"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -21,7 +22,90 @@ func getArgs(s []string) ([]string, error) {
 	return args, nil
 }
 
-func getVaultSecret(a, t, p, k string) (string, error) {
+func checkGitlabStatus(u, t string) error {
+	apiEndpoint := u + "/api/v4/version"
+	var bearer = "Bearer " + t
+	req, err := http.NewRequest("GET", apiEndpoint, nil)
+	if err != nil {
+		log.Fatalf("%s\n", err)
+		os.Exit(1)
+	}
+	h := req.Header
+	h.Add("Authorization", bearer)
+	client := &http.Client{}
+	response, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("%s\n", err)
+		os.Exit(1)
+	}
+	defer response.Body.Close()
+	switch response.StatusCode {
+	case 400:
+		return errors.New(response.Status)
+	case 401:
+		return errors.New(response.Status)
+	case 403:
+		return errors.New(response.Status)
+	case 404:
+		return errors.New(response.Status)
+	case 405:
+		return errors.New(response.Status)
+	case 409:
+		return errors.New(response.Status)
+	case 412:
+		return errors.New(response.Status)
+	case 422:
+		return errors.New(response.Status)
+	case 429:
+		return errors.New(response.Status)
+	case 500:
+		return errors.New(response.Status)
+	}
+	return nil
+}
+
+func checkVaultStatus(a, t string) error {
+	apiEndpoint := a + "/v1/secret?help=1"
+	fmt.Println(apiEndpoint)
+	var bearer = "Bearer " + t
+	req, err := http.NewRequest("GET", apiEndpoint, nil)
+	if err != nil {
+		log.Fatalf("%s\n", err)
+	}
+	h := req.Header
+	h.Add("Authorization", bearer)
+	client := &http.Client{}
+	response, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("%s\n", err)
+	}
+	defer response.Body.Close()
+	switch response.StatusCode {
+	case 400:
+		return errors.New(response.Status)
+	case 403:
+		return errors.New(response.Status)
+	case 404:
+		return errors.New(response.Status)
+	case 405:
+		return errors.New(response.Status)
+	case 412:
+		return errors.New(response.Status)
+	case 429:
+		return errors.New(response.Status)
+	case 473:
+		return errors.New(response.Status)
+	case 500:
+		return errors.New(response.Status)
+	case 502:
+		return errors.New(response.Status)
+	case 503:
+		return errors.New(response.Status)
+	}
+	return nil
+}
+
+func getVaultSecret(a, t, n, p, k string) (string, error) {
 	config := &api.Config{
 		Address: a,
 	}
@@ -41,10 +125,6 @@ func getVaultSecret(a, t, p, k string) (string, error) {
 	return m[k], nil
 }
 
-func apiToken(s string) (string, error) {
-	return s, nil
-}
-
 func validReportCheck(s string) (string, error) {
 	reports := []string{"list_users", "list_active_users", "list_blocked_users", "list_external_users", "list_users_using_2FA", "list_groups", "list_group_projects"}
 	for _, v := range reports {
@@ -57,24 +137,39 @@ func validReportCheck(s string) (string, error) {
 }
 
 // TODO add a function that will allow the user to change the directory where the report gets saved.
-func setExportDirectory(s string) (string, error) {
-	return s, nil
-}
+//func setExportDirectory(s string) (string, error) {
+//	return s, nil
+//}
 
 // TODO add a function that will allow the user to change the output of the report.
-func setOutputFormat(s string) (string, error) {
-	return s, nil
-}
+//func setOutputFormat(s string) (string, error) {
+//	return s, nil
+//}
 
 func parseToken(m map[string]string) {
 	if v, found := m["Address"]; found {
-		token, err := getVaultSecret(v, m["Token"], m["Path"], m["Key"])
+		err := checkVaultStatus(v, m["Token"])
 		if err != nil {
-			log.Fatalf("%s", err)
+			log.Fatalf("%s\n", err)
+			os.Exit(1)
+		}
+		token, err := getVaultSecret(v, m["Token"], m["Namespace"], m["Path"], m["Key"])
+		if err != nil {
+			log.Fatalf("%s\n", err)
+			os.Exit(1)
 		}
 		m["Token"] = token
-		executeReport(m)
+		err = checkGitlabStatus(m["Url"], m["Token"])
+		if err != nil {
+			log.Fatalf("%s\n", err)
+			os.Exit(1)
+		}
 	} else {
+		err := checkGitlabStatus(m["Url"], m["Token"])
+		if err != nil {
+			log.Fatalf("%s\n", err)
+			os.Exit(1)
+		}
 		executeReport(m)
 	}
 }
@@ -140,7 +235,8 @@ func defaultHelp() {
 
 	Commands:
 	--gitlab_url, -gitlab_url, gitlab_url, -gu			Passthrough your GitLab Url
-	--vault_address, -vault_address, vault_address -va		Passthrough your Hashicorp Vault Address
+	--vault_address, -vault_address, vault_address -va		Passthrough your HashiCorp Vault Address
+	--namespace, -namespace, namespace -n Passthrough your HashiCorp Vault Namespace
 	--path, -path, path, -p						Passthrough your HashiCorp Secret Path
 	--secret_key, -secret_key, secret_key, -sk			Passthrough your HashiCorp Secret Key
 	--api_token, -api_token, api_token, -at				Passthrough your API Token (Either GitLab API Token or Hashicorp Vault Token)
@@ -177,9 +273,22 @@ func vaultAddressHelp() {
 			gitlab-reporter vault_address https://vault.example.com
 			gitlab-reporter -va https://vault.example.com
 
-			Must be used in conjunction with the --path flag.
+			Must be used in conjunction with the --namespace, --path, and --secret_key flags.
 	`
 	fmt.Printf("%s\n", vaultAddressHelp)
+	os.Exit(0)
+}
+
+func namespaceHelp() {
+	var namespaceHelp string = `
+	Usage: 		gitlab-reporter --namepsace namespace
+			gitlab-reporter -namespace namespace
+			gitlab-reporter namespace namespace
+			gitlab-reporter -n namespace
+
+			Must be used in conjunction with the --vault_address, --path, and --secret_key flags.
+	`
+	fmt.Printf("%s\n", namespaceHelp)
 	os.Exit(0)
 }
 
@@ -190,7 +299,7 @@ func pathHelp() {
 			gitlab-reporter path pass the path where the secret is contained in HashiCorp Vault
 			gitlab-reporter -p pass the path where the secret is contained in HashiCorp Vault
 			
-			Must be used in conjunction with the --vault_address flag.
+			Must be used in conjunction with the --vault_address, --namespace, and --secret_key flags.
 	`
 	fmt.Printf("%s\n", vaultAddressHelp)
 	os.Exit(0)
@@ -203,7 +312,7 @@ func secretKeyHelp() {
 			gitlab-reporter secret_key pass the key from the HashiCorp Vault Secret
 			gitlab-reporter -sk pass the key from the HashiCorp Vault Secret
 
-			Must be used in conjunction with teh --vault_address flag.
+			Must be used in conjunction with the --vault_address, --namespace, and --path.
 	`
 	fmt.Printf("%s\n", secretKeyHelp)
 	os.Exit(0)
@@ -215,6 +324,9 @@ func apiTokenHelp() {
 			gitlab-reporter -api_token pass the secret token from either GitLab or HashiCorp Vault
 			gitlab-reporter api_token pass the secret token from either GitLab or HashiCorp Vault
 			gitlab-reporter -at pass the secret token from either GitLab or HashiCorp Vault
+
+			Required Field that must be passed through either to use API token to decrypt Hashicorp Vault 
+			or to directly read the GitLab API directly.
 	`
 	fmt.Printf("%s\n", apiTokenHelp)
 	os.Exit(0)
@@ -274,35 +386,39 @@ func ParseArgs() {
 			if strings.Contains(args[i+1], "help") {
 				gitlabUrlHelp()
 			} else {
-				data["Url"] = args[i]
+				data["Url"] = args[i+1]
 			}
 		case "--vault_address", "-vault_address", "vault_address", "-va":
-			if strings.Contains(args[i+2], "help") {
+			if strings.Contains(args[i+1], "help") {
 				vaultAddressHelp()
 			} else {
-				data["Address"] = args[i]
+				data["Address"] = args[i+1]
+			}
+		case "--namespace", "-namespace", "namespace", "-n":
+			if strings.Contains(args[i+1], "help") {
+				vaultAddressHelp()
+			} else {
+				data["Namespace"] = args[i+1]
 			}
 		case "--path", "-path", "path", "-p":
 			if strings.Contains(args[i+1], "help") {
 				pathHelp()
 			} else {
-				data["Path"] = args[i]
+				data["Path"] = args[i+1]
 			}
 		case "--secret_key", "-secret_key", "secret_key", "-sk":
 			if strings.Contains(args[i+1], "help") {
 				secretKeyHelp()
 			} else {
-				data["Key"] = args[i]
+				data["Key"] = args[i+1]
 			}
 		case "--api_token", "-api_token", "api_token", "-at":
 			if strings.Contains(args[i+1], "help") {
 				apiTokenHelp()
 			} else {
-				data["Token"] = args[i]
+				data["Token"] = args[i+1]
 			}
 		case "--report", "-report", "report", "-r":
-			fmt.Println(args[i])
-			fmt.Println(args[i+1])
 			response, err := validReportCheck(args[i])
 			if err != nil {
 				log.Fatalf("%s\n", err)
@@ -318,11 +434,9 @@ func ParseArgs() {
 			if strings.Contains(args[i+1], "help") {
 				exportDirectoryHelp()
 			} else {
-				data["Directory"] = args[i]
+				data["Directory"] = args[i+1]
 			}
 		case "--ouput_format", "-output_format", "output_format", "-of":
-			fmt.Println(args[i])
-			fmt.Println(args[i+1])
 			if strings.Contains(args[i+1], "help") {
 				outputFormatHelp()
 			} else {
