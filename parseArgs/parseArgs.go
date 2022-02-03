@@ -1,7 +1,6 @@
 package parseArgs
 
 import (
-	"gitlab-reporter/checkStatus"
 	"gitlab-reporter/getKey"
 	"gitlab-reporter/helpMenu"
 	"gitlab-reporter/reports"
@@ -29,35 +28,6 @@ func getArgs(s []string) ([]string, error) {
 //func setOutputFormat(s string) (string, error) {
 //	return s, nil
 //}
-
-func parseToken(m map[string]string) {
-	if v, found := m["Address"]; found {
-		err := checkStatus.CheckVaultStatus(v, m["Token"])
-		if err != nil {
-			log.Fatalf("%s\n", err)
-			os.Exit(1)
-		}
-		token, err := getKey.GetVaultSecret(v, m["Token"], m["Namespace"], m["Path"], m["Key"])
-		if err != nil {
-			log.Fatalf("%s\n", err)
-			os.Exit(1)
-		}
-		m["Token"] = token
-		err = checkStatus.CheckGitlabStatus(m["Url"], m["Token"])
-		if err != nil {
-			log.Fatalf("%s\n", err)
-			os.Exit(1)
-		}
-		reports.ExecuteReport(m)
-	} else {
-		err := checkStatus.CheckGitlabStatus(m["Url"], m["Token"])
-		if err != nil {
-			log.Fatalf("%s\n", err)
-			os.Exit(1)
-		}
-		reports.ExecuteReport(m)
-	}
-}
 
 func ParseArgs() {
 	data := make(map[string]string)
@@ -131,5 +101,5 @@ func ParseArgs() {
 			helpMenu.DefaultHelp()
 		}
 	}
-	parseToken(data)
+	getKey.ParseToken(data)
 }
